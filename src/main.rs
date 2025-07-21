@@ -55,19 +55,21 @@ fn brute_single_byte_xor_cipher(input: &str) -> Vec<(Vec<u8>, Vec<u8>)> {
 fn score_byte(b: &u8) -> f32 {
     let mult = 10.0;
     match b {
-        69 | 101 => mult * 12.10,          // E, e
-        84 | 116 => mult * 8.94,          // T, t
-        65 | 97 => mult * 8.55,           // A, a
-        79 | 111 => mult * 7.47,          // O, o
-        73 | 105 => mult * 7.33,          // I, i
-        78 | 110 => mult * 7.17,          // N, n
-        83 | 115 => mult * 6.73,           // S, s
-        72 | 104 => mult * 4.96,           // H, h
-        82 | 114 => mult * 6.33,           // R, r
-        68 | 100 => mult * 3.87,           // D, d
-        76 | 108 => mult * 4.21,           // L, l
-        85 | 117 => mult * 2.68,           // U, u
-        65..=90 | 97..=122 => mult * 1.0,
+        69 | 101 => mult * 12.10, // E, e
+        84 | 116 => mult * 8.94,  // T, t
+        65 | 97 => mult * 8.55,   // A, a
+        79 | 111 => mult * 7.47,  // O, o
+        73 | 105 => mult * 7.33,  // I, i
+        78 | 110 => mult * 7.17,  // N, n
+        83 | 115 => mult * 6.73,  // S, s
+        72 | 104 => mult * 4.96,  // H, h
+        82 | 114 => mult * 6.33,  // R, r
+        68 | 100 => mult * 3.87,  // D, d
+        76 | 108 => mult * 4.21,  // L, l
+        85 | 117 => mult * 2.68,  // U, u
+        // Remaining alphabet and spaces
+        65..=90 | 97..=122 | 32 => mult * 1.0,
+        // Everything else
         _ => -100.0
     }
 }
@@ -160,6 +162,13 @@ fn test_scoring_ascii_latin() {
     let bytes: Vec<u8> = string_to_bytes(input);
     let score = score_bytes(&bytes);
     assert_eq!(score, -200);
+}
+#[test]
+fn test_scoring_ascii_mixed() {
+    let input: &str = "æÊ ae";
+    let bytes: Vec<u8> = string_to_bytes(input);
+    let score = score_bytes(&bytes);
+    assert_eq!(score, 17);
 }
 #[test]
 fn test_scoring_ascii_standard_1() {
