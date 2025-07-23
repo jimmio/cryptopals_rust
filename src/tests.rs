@@ -8,7 +8,7 @@ mod tests {
     use super::*;
 
     #[test] // Challenge 1
-    fn test_hex_to_b64() {
+    fn t_hex_to_b64() {
         let input: &str = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
         let bytes: Vec<u8> = hex_to_bytes(input);
         let result: String = bytes_to_b64(bytes);
@@ -18,39 +18,39 @@ mod tests {
         );
     }
     #[test]
-    fn test_number_of_bytes_from_standard_ascii_string_hex() {
+    fn t_number_of_bytes_from_standard_ascii_string_hex() {
         let input: &str = "49276d206b696c6c696e";
         let bytes: Vec<u8> = hex_to_bytes(input);
         assert_eq!(bytes.len(), 10)
     }
     #[test]
-    fn test_number_of_bytes_from_standard_ascii_string() {
+    fn t_number_of_bytes_from_standard_ascii_string() {
         let input: &str = "I'm killin";
         let bytes: Vec<u8> = string_to_bytes(input);
         assert_eq!(bytes.len(), 10)
     }
     #[test]
-    fn test_number_of_bytes_from_latin_ascii_string_hex() {
+    fn t_number_of_bytes_from_latin_ascii_string_hex() {
         // æÊÎÌËÂæÊÎÌ
         let input: &str = "e6cacecccbc2e6cacecc";
         let bytes: Vec<u8> = hex_to_bytes(input);
         assert_eq!(bytes.len(), 10)
     }
     #[test]
-    fn test_number_of_bytes_from_latin_ascii_string() {
+    fn t_number_of_bytes_from_latin_ascii_string() {
         let input: &str = "æÊÎÌËÂæÊÎÌ";
         let bytes: Vec<u8> = string_to_bytes(input);
         assert_eq!(bytes.len(), 10)
     }
     #[test]
-    fn test_number_of_bytes_from_mixed_ascii_string() {
+    fn t_number_of_bytes_from_mixed_ascii_string() {
         let input: &str = "æbc";
         let bytes: Vec<u8> = string_to_bytes(input);
         assert_eq!(bytes.len(), 3)
     }
 
     #[test] // Challenge 2
-    fn test_xor_bytes() {
+    fn t_xor_bytes() {
         let input: &str = "1c0111001f010100061a024b53535009181c";
         let key: &str = "686974207468652062756c6c277320657965";
         let input_bytes: Vec<u8> = hex_to_bytes(input);
@@ -62,7 +62,7 @@ mod tests {
 
     // Challenge 3
     #[test]
-    fn test_break_single_byte_xor_cipher() {
+    fn t_break_single_byte_xor_cipher() {
         let input: &str = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
         let keys_plaintexts = brute_single_byte_xor_cipher(&input);
         let highest_scoring = highest_scoring_plaintext(&keys_plaintexts);
@@ -72,28 +72,28 @@ mod tests {
         );
     }
     #[test]
-    fn test_scoring_ascii_latin() {
+    fn t_scoring_ascii_latin() {
         let input: &str = "æÊ";
         let bytes = string_to_bytes(input);
         let score = score_bytes(&bytes);
         assert_eq!(score, -200);
     }
     #[test]
-    fn test_scoring_ascii_mixed() {
+    fn t_scoring_ascii_mixed() {
         let input: &str = "æÊ ae";
         let bytes = string_to_bytes(input);
         let score = score_bytes(&bytes);
         assert_eq!(score, 17);
     }
     #[test]
-    fn test_scoring_ascii_standard_1() {
+    fn t_scoring_ascii_standard_1() {
         let input: &str = "E";
         let bytes: Vec<u8> = string_to_bytes(input);
         let score = score_bytes(&bytes);
         assert_eq!(score, 121);
     }
     #[test]
-    fn test_scoring_ascii_standard_2() {
+    fn t_scoring_ascii_standard_2() {
         let input: &str = "eta";
         let bytes = string_to_bytes(input);
         let score = score_bytes(&bytes);
@@ -102,7 +102,7 @@ mod tests {
 
     // Challenge 4
     #[test]
-    fn test_detect_single_character_xor() {
+    fn t_detect_single_character_xor() {
         let file = File::open("./challenge_files/4.txt").unwrap();
         let reader = BufReader::new(file);
         let lines: Vec<String> = reader.lines().map(|l| l.unwrap()).collect();
