@@ -1,17 +1,21 @@
 use cryptopals::*;
+use std::fs::File;
+use std::io::{self, BufRead, BufReader};
 
 #[cfg(test)]
-
 mod tests {
-    
+
     use super::*;
-    
+
     #[test] // Challenge 1
     fn test_hex_to_b64() {
         let input: &str = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
         let bytes: Vec<u8> = hex_to_bytes(input);
         let result: String = bytes_to_b64(bytes);
-        assert_eq!(result, "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t");
+        assert_eq!(
+            result,
+            "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t"
+        );
     }
     #[test]
     fn test_number_of_bytes_from_standard_ascii_string_hex() {
@@ -60,21 +64,24 @@ mod tests {
     #[test]
     fn test_break_single_byte_xor_cipher() {
         let input: &str = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
-        let keys_plaintexts: Vec<(Vec<u8>, Vec<u8>)> = brute_single_byte_xor_cipher(&input);
-        let highest_scoring: (Vec<u8>, Vec<u8>) = highest_scoring_plaintext(&keys_plaintexts);
-        assert_eq!(String::from_utf8(highest_scoring.1).unwrap(), "Cooking MC's like a pound of bacon");
+        let keys_plaintexts = brute_single_byte_xor_cipher(&input);
+        let highest_scoring = highest_scoring_plaintext(&keys_plaintexts);
+        assert_eq!(
+            String::from_utf8(highest_scoring.1).unwrap(),
+            "Cooking MC's like a pound of bacon"
+        );
     }
     #[test]
     fn test_scoring_ascii_latin() {
         let input: &str = "æÊ";
-        let bytes: Vec<u8> = string_to_bytes(input);
+        let bytes = string_to_bytes(input);
         let score = score_bytes(&bytes);
         assert_eq!(score, -200);
     }
     #[test]
     fn test_scoring_ascii_mixed() {
         let input: &str = "æÊ ae";
-        let bytes: Vec<u8> = string_to_bytes(input);
+        let bytes = string_to_bytes(input);
         let score = score_bytes(&bytes);
         assert_eq!(score, 17);
     }
@@ -88,10 +95,21 @@ mod tests {
     #[test]
     fn test_scoring_ascii_standard_2() {
         let input: &str = "eta";
-        let bytes: Vec<u8> = string_to_bytes(input);
+        let bytes = string_to_bytes(input);
         let score = score_bytes(&bytes);
         assert_eq!(score, 296);
     }
 
-    
+    // Challenge 4
+    #[test]
+    fn test_detect_single_character_xor() {
+        let file = File::open("./challenge_files/4.txt").unwrap();
+        let reader = BufReader::new(file);
+        let lines: Vec<String> = reader.lines().map(|l| l.unwrap()).collect();
+        let highest_scoring = detect_single_character_xor(lines);
+        assert_eq!(
+            String::from_utf8(highest_scoring.1).unwrap(),
+            "Now that the party is jumping\n"
+        );
+    }
 }

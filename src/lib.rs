@@ -1,6 +1,6 @@
+use base64::prelude::*;
 use encoding_rs::mem::convert_utf8_to_latin1_lossy;
 use hex::FromHex;
-use base64::prelude::*;
 use std::ops::Range;
 
 pub fn hex_to_bytes(hex_str: &str) -> Vec<u8> {
@@ -38,11 +38,10 @@ pub fn string_to_bytes(s: &str) -> Vec<u8> {
 
 pub fn brute_single_byte_xor_cipher(input: &str) -> Vec<(Vec<u8>, Vec<u8>)> {
     let input_bytes: Vec<u8> = hex_to_bytes(input);
-    let keys: Vec<Vec<u8>> = Range{start: 0, end: 254}.map(|b: u8| vec![b]).collect();
-    keys
-        .iter()
+    let keys: Vec<Vec<u8>> = Range { start: 0, end: 254 }.map(|b: u8| vec![b]).collect();
+    keys.iter()
         .map(|k| {
-            let plaintext = xor_bytes(&input_bytes, &k);
+            let plaintext = xor_bytes(&input_bytes, k);
             (k.clone(), plaintext)
         })
         .collect()
@@ -66,28 +65,31 @@ pub fn score_byte(b: &u8) -> f32 {
         // Remaining alphabet and spaces
         65..=90 | 97..=122 | 32 => mult * 1.0,
         // Everything else
-        _ => -100.0
+        _ => -100.0,
     }
 }
 
 pub fn score_bytes(bytes: &Vec<u8>) -> i32 {
-    let score = bytes
-        .iter()
-        .map(|b| score_byte(b))
-        .sum::<f32>()
-        .round();
+    let score = bytes.iter().map(|b| score_byte(b)).sum::<f32>().round();
     score as i32
 }
 
-pub fn highest_scoring_plaintext(keys_plaintexts: &Vec<(Vec<u8>, Vec<u8>)>) -> (Vec<u8>, Vec<u8>) {
+pub fn highest_scoring_plaintext(
+    keys_plaintexts: &Vec<(Vec<u8>, Vec<u8>)>,
+) -> (Vec<u8>, Vec<u8>, i32) {
     keys_plaintexts
         .iter()
-        .map(|kp| {
-            (kp, score_bytes(&kp.1))
-        })
-        .max_by(|kps1, kps2|
-                kps1.1.cmp(&kps2.1))
+        .map(|kp| (kp.0.clone(), kp.1.clone(), score_bytes(&kp.1)))
+        .max_by(|kps_x, kps_y| kps_x.2.cmp(&kps_y.2))
         .unwrap()
-        .0
+        .clone()
+}
+
+pub fn detect_single_character_xor(hex_strs: Vec<String>) -> (Vec<u8>, Vec<u8>, i32) {
+    hex_strs
+        .iter()
+        .map(|s| highest_scoring_plaintext(&brute_single_byte_xor_cipher(s)))
+        .max_by(|kps_x, kps_y| kps_x.2.cmp(&kps_y.2))
+        .unwrap()
         .clone()
 }
