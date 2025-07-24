@@ -1,4 +1,5 @@
 use cryptopals::*;
+use hamming;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 
@@ -124,5 +125,15 @@ mod tests {
         let xord_hex = bytes_to_hex(xord_bytes);
         let expected = "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f";
         assert_eq!(xord_hex, expected);
+    }
+
+    // Challenge 6
+    #[test]
+    fn t_hamming_distance() {
+        let s1_bytes = string_to_bytes("this is a test");
+        let s2_bytes = string_to_bytes("wokka wokka!!!");
+        let expected_dist: u64 = 37;
+        let result = hamming::distance(&s1_bytes, &s2_bytes);
+        assert_eq!(result, expected_dist);
     }
 }
