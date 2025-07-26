@@ -15,6 +15,10 @@ pub fn bytes_to_b64(bytes: Vec<u8>) -> String {
     BASE64_STANDARD.encode(bytes)
 }
 
+pub fn b64_to_bytes(s: &str) -> Vec<u8> {
+    BASE64_STANDARD.decode(s).unwrap()
+}
+
 pub fn xor_bytes(input: &Vec<u8>, key: &Vec<u8>) -> Vec<u8> {
     input
         .iter()
@@ -92,4 +96,52 @@ pub fn detect_single_character_xor(hex_strs: Vec<String>) -> (Vec<u8>, Vec<u8>, 
         .max_by(|kps_x, kps_y| kps_x.2.cmp(&kps_y.2))
         .unwrap()
         .clone()
+}
+
+pub fn guess_xor_keysize(input_bytes: &Vec<u8>) -> u32 {
+    let mut sizes_distances: Vec<(u32, u32)> = vec![];
+    let sizes: Vec<usize> = (2usize..=40).collect();
+    for keysize in sizes {
+        let bytes_a = &input_bytes[0..keysize];
+        let bytes_b = &input_bytes[keysize..keysize * 2];
+        let keysize = keysize as u32;
+        let dist: u32 = hamming::distance(bytes_a, bytes_b) as u32 / keysize;
+        sizes_distances.push((keysize, dist));
+    }
+    sizes_distances
+        .iter()
+        .min_by(|size_dist_x, size_dist_y| size_dist_x.1.cmp(&size_dist_y.1))
+        .unwrap()
+        .0
+}
+
+pub fn partition(input_bytes: &Vec<u8>, keysize: &u32) -> Vec<Vec<u8>> {
+    input_bytes
+        .chunks(*keysize as usize)
+        .map(|chunk| chunk.to_vec())
+        .collect()
+}
+
+pub fn transpose(bytes: &Vec<Vec<u8>>) -> Vec<Vec<u8>> {
+    // Assume that all inner vecs will be of the same length
+    // except for (possibly) the last
+    let vec_len = bytes[0].len();
+    let mut transposed: Vec<Vec<u8>> = vec![];
+    for i in 0..vec_len {
+        let tv: Vec<u8> = bytes
+            .iter()
+            .map(|v| match v.get(i) {
+                Some(b) => b.to_owned(),
+                // Return 0 for missing indices
+                None => 0,
+            })
+            .collect();
+        transposed.push(tv);
+    }
+    transposed
+}
+
+pub fn break_repeating_key_xor(input_bytes: &Vec<u8>, keysize: u32) {
+    let partitioned = partition(&input_bytes, &keysize);
+    println!("{:?}", partitioned);
 }

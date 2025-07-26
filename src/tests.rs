@@ -136,4 +136,53 @@ mod tests {
         let result = hamming::distance(&s1_bytes, &s2_bytes);
         assert_eq!(result, expected_dist);
     }
+
+    #[test]
+    fn t_guess_xor_keysize() {
+        let file = File::open("./challenge_files/6.txt").unwrap();
+        let reader = BufReader::new(file);
+        let b64: String = reader.lines().map(|l| l.unwrap()).collect();
+        let input_bytes: Vec<u8> = b64_to_bytes(&b64);
+        let keysize: u32 = guess_xor_keysize(&input_bytes);
+        assert_eq!(keysize, 5); // TODO verify
+    }
+
+    #[test]
+    fn t_partition() {
+        let v: Vec<u8> = (0u8..=21).collect();
+        let size = 5;
+        let partitioned = partition(&v, &size);
+        assert_eq!(
+            partitioned,
+            vec![
+                vec![0, 1, 2, 3, 4],
+                vec![5, 6, 7, 8, 9],
+                vec![10, 11, 12, 13, 14],
+                vec![15, 16, 17, 18, 19],
+                vec![20, 21]
+            ]
+        );
+    }
+
+    #[test]
+    fn t_transpose() {
+        let v: Vec<Vec<u8>> = vec![
+            vec![0, 1, 2, 3, 4],
+            vec![5, 6, 7, 8, 9],
+            vec![10, 11, 12, 13, 14],
+            vec![15, 16, 17, 18, 19],
+            vec![20, 21],
+        ];
+        let transposed = transpose(&v);
+        assert_eq!(
+            transposed,
+            vec![
+                vec![0, 5, 10, 15, 20],
+                vec![1, 6, 11, 16, 21],
+                vec![2, 7, 12, 17, 0],
+                vec![3, 8, 13, 18, 0],
+                vec![4, 9, 14, 19, 0]
+            ]
+        );
+    }
 }
