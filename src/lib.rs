@@ -40,8 +40,7 @@ pub fn string_to_bytes(s: &str) -> Vec<u8> {
     u8_vec
 }
 
-pub fn brute_single_byte_xor_cipher(input: &str) -> Vec<(Vec<u8>, Vec<u8>)> {
-    let input_bytes: Vec<u8> = hex_to_bytes(input);
+pub fn brute_single_byte_xor_cipher(input_bytes: &Vec<u8>) -> Vec<(Vec<u8>, Vec<u8>)> {
     let keys: Vec<Vec<u8>> = Range { start: 0, end: 254 }.map(|b: u8| vec![b]).collect();
     keys.iter()
         .map(|k| {
@@ -81,6 +80,7 @@ pub fn score_bytes(bytes: &Vec<u8>) -> i32 {
 pub fn highest_scoring_plaintext(
     keys_plaintexts: &Vec<(Vec<u8>, Vec<u8>)>,
 ) -> (Vec<u8>, Vec<u8>, i32) {
+    // returns (key, plaintext, score)
     keys_plaintexts
         .iter()
         .map(|kp| (kp.0.clone(), kp.1.clone(), score_bytes(&kp.1)))
@@ -89,35 +89,39 @@ pub fn highest_scoring_plaintext(
         .clone()
 }
 
-pub fn detect_single_character_xor(hex_strs: Vec<String>) -> (Vec<u8>, Vec<u8>, i32) {
-    hex_strs
+pub fn break_single_character_xor(input_bytes: Vec<Vec<u8>>) -> (Vec<u8>, Vec<u8>, i32) {
+    input_bytes
         .iter()
-        .map(|s| highest_scoring_plaintext(&brute_single_byte_xor_cipher(s)))
+        .map(|v| highest_scoring_plaintext(&brute_single_byte_xor_cipher(v)))
         .max_by(|kps_x, kps_y| kps_x.2.cmp(&kps_y.2))
         .unwrap()
         .clone()
 }
 
-pub fn guess_xor_keysize(input_bytes: &Vec<u8>) -> u32 {
+pub fn guess_xor_keysize(input_bytes: &Vec<u8>) -> Vec<u32> {
     let mut sizes_distances: Vec<(u32, u32)> = vec![];
-    let sizes: Vec<usize> = (2usize..=40).collect();
+    let sizes: Vec<usize> = (2usize..=60).collect();
     for keysize in sizes {
-        let bytes_a = &input_bytes[0..keysize];
-        let bytes_b = &input_bytes[keysize..keysize * 2];
-        let keysize = keysize as u32;
-        let dist: u32 = hamming::distance(bytes_a, bytes_b) as u32 / keysize;
-        sizes_distances.push((keysize, dist));
+        let keysize_u32 = keysize as u32;
+        let chunks: Vec<_> = input_bytes.chunks(keysize).take(8).collect();
+        let avg = (0..3)
+            .map(|i| hamming::distance(chunks[i], chunks[i + 1]) as u32 / keysize_u32)
+            .sum::<u32>()
+            / 4;
+        sizes_distances.push((keysize_u32, avg));
     }
+    sizes_distances.sort_by(|kd1, kd2| kd1.1.cmp(&kd2.1));
     sizes_distances
-        .iter()
-        .min_by(|size_dist_x, size_dist_y| size_dist_x.1.cmp(&size_dist_y.1))
-        .unwrap()
-        .0
+        .into_iter()
+        .take(10)
+        .clone()
+        .map(|tup| tup.0)
+        .collect()
 }
 
-pub fn partition(input_bytes: &Vec<u8>, keysize: &u32) -> Vec<Vec<u8>> {
+pub fn partition(input_bytes: &Vec<u8>, size: &u32) -> Vec<Vec<u8>> {
     input_bytes
-        .chunks(*keysize as usize)
+        .chunks(*size as usize)
         .map(|chunk| chunk.to_vec())
         .collect()
 }
@@ -143,5 +147,13 @@ pub fn transpose(bytes: &Vec<Vec<u8>>) -> Vec<Vec<u8>> {
 
 pub fn break_repeating_key_xor(input_bytes: &Vec<u8>, keysize: u32) {
     let partitioned = partition(&input_bytes, &keysize);
-    println!("{:?}", partitioned);
+    let transposed = transpose(&partitioned);
+    let keys_plaintexts: Vec<Vec<(Vec<u8>, Vec<u8>)>> = transposed
+        .iter()
+        .map(|v| brute_single_byte_xor_cipher(v))
+        .collect();
+    let keys_plaintexts_scores: Vec<(Vec<u8>, Vec<u8>, i32)> = keys_plaintexts
+        .iter()
+        .map(|v| highest_scoring_plaintext(&v))
+        .collect();
 }

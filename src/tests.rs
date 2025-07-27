@@ -65,7 +65,8 @@ mod tests {
     #[test]
     fn t_break_single_byte_xor_cipher() {
         let input: &str = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
-        let keys_plaintexts = brute_single_byte_xor_cipher(&input);
+        let input_bytes: Vec<u8> = hex_to_bytes(input);
+        let keys_plaintexts = brute_single_byte_xor_cipher(&input_bytes);
         let highest_scoring = highest_scoring_plaintext(&keys_plaintexts);
         assert_eq!(
             String::from_utf8(highest_scoring.1).unwrap(),
@@ -107,7 +108,8 @@ mod tests {
         let file = File::open("./challenge_files/4.txt").unwrap();
         let reader = BufReader::new(file);
         let lines: Vec<String> = reader.lines().map(|l| l.unwrap()).collect();
-        let highest_scoring = detect_single_character_xor(lines);
+        let lines_as_bytes: Vec<Vec<u8>> = lines.iter().map(|l| hex_to_bytes(l)).collect();
+        let highest_scoring = break_single_character_xor(lines_as_bytes);
         assert_eq!(
             String::from_utf8(highest_scoring.1).unwrap(),
             "Now that the party is jumping\n"
@@ -138,13 +140,29 @@ mod tests {
     }
 
     #[test]
-    fn t_guess_xor_keysize() {
+    fn t_break_repeating_key_xor() {
         let file = File::open("./challenge_files/6.txt").unwrap();
         let reader = BufReader::new(file);
         let b64: String = reader.lines().map(|l| l.unwrap()).collect();
         let input_bytes: Vec<u8> = b64_to_bytes(&b64);
-        let keysize: u32 = guess_xor_keysize(&input_bytes);
-        assert_eq!(keysize, 5); // TODO verify
+        let keysizes = guess_xor_keysize(&input_bytes);
+        assert_eq!(keysizes, vec![2, 3, 5, 13, 18, 29, 58, 4, 6, 7]);
+        for keysize in keysizes {
+            let partitioned = partition(&input_bytes, &keysize);
+            let transposed: Vec<Vec<u8>> = transpose(&partitioned);
+            let keys_plaintexts: Vec<Vec<(Vec<u8>, Vec<u8>)>> = transposed
+                .iter()
+                .map(|v| brute_single_byte_xor_cipher(v))
+                .collect();
+            let highest_scoring_plaintexts = keys_plaintexts
+                .iter()
+                .map(|v| highest_scoring_plaintext(&v));
+            assert_eq!(highest_scoring_plaintexts.len() as u32, keysize);
+            println!("keysize: {keysize}");
+            for kps in highest_scoring_plaintexts {
+                println!("{:?}", kps.0[0] as char);
+            }
+        }
     }
 
     #[test]
