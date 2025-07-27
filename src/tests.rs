@@ -1,5 +1,4 @@
 use cryptopals::*;
-use hamming;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
