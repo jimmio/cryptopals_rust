@@ -1,7 +1,7 @@
 use cryptopals::*;
 use hamming;
 use std::fs::File;
-use std::io::{self, BufRead, BufReader};
+use std::io::{BufRead, BufReader};
 
 #[cfg(test)]
 mod tests {
@@ -147,22 +147,14 @@ mod tests {
         let input_bytes: Vec<u8> = b64_to_bytes(&b64);
         let keysizes = guess_xor_keysize(&input_bytes);
         assert_eq!(keysizes, vec![2, 3, 5, 13, 18, 29, 58, 4, 6, 7]);
-        for keysize in keysizes {
-            let partitioned = partition(&input_bytes, &keysize);
-            let transposed: Vec<Vec<u8>> = transpose(&partitioned);
-            let keys_plaintexts: Vec<Vec<(Vec<u8>, Vec<u8>)>> = transposed
-                .iter()
-                .map(|v| brute_single_byte_xor_cipher(v))
-                .collect();
-            let highest_scoring_plaintexts = keys_plaintexts
-                .iter()
-                .map(|v| highest_scoring_plaintext(&v));
-            assert_eq!(highest_scoring_plaintexts.len() as u32, keysize);
-            println!("keysize: {keysize}");
-            for kps in highest_scoring_plaintexts {
-                println!("{:?}", kps.0[0] as char);
-            }
-        }
+        let key_plaintext_score = break_repeating_key_xor(&input_bytes, keysizes);
+        let key_str = String::from_utf8(key_plaintext_score.0).unwrap();
+        let plaintext_str = String::from_utf8(key_plaintext_score.1).unwrap();
+        assert_eq!(key_str, "Terminator X: Bring the noise");
+        assert_eq!(
+            plaintext_str,
+            "I'm back and I'm ringin' the bell \nA rockin' on the mike while the fly girls yell \nIn ecstasy in the back of me \nWell that's my DJ Deshay cuttin' all them Z's \nHittin' hard and the girlies goin' crazy \nVanilla's on the mike, man I'm not lazy. \n\nI'm lettin' my drug kick in \nIt controls my mouth and I begin \nTo just let it flow, let my concepts go \nMy posse's to the side yellin', Go Vanilla Go! \n\nSmooth 'cause that's the way I will be \nAnd if you don't give a damn, then \nWhy you starin' at me \nSo get off 'cause I control the stage \nThere's no dissin' allowed \nI'm in my own phase \nThe girlies sa y they love me and that is ok \nAnd I can dance better than any kid n' play \n\nStage 2 -- Yea the one ya' wanna listen to \nIt's off my head so let the beat play through \nSo I can funk it up and make it sound good \n1-2-3 Yo -- Knock on some wood \nFor good luck, I like my rhymes atrocious \nSupercalafragilisticexpialidocious \nI'm an effect and that you can bet \nI can take a fly girl and make her wet. \n\nI'm like Samson -- Samson to Delilah \nThere's no denyin', You can try to hang \nBut you'll keep tryin' to get my style \nOver and over, practice makes perfect \nBut not if you're a loafer. \n\nYou'll get nowhere, no place, no time, no girls \nSoon -- Oh my God, homebody, you probably eat \nSpaghetti with a spoon! Come on and say it! \n\nVIP. Vanilla Ice yep, yep, I'm comin' hard like a rhino \nIntoxicating so you stagger like a wino \nSo punks stop trying and girl stop cryin' \nVanilla Ice is sellin' and you people are buyin' \n'Cause why the freaks are jockin' like Crazy Glue \nMovin' and groovin' trying to sing along \nAll through the ghetto groovin' this here song \nNow you're amazed by the VIP posse. \n\nSteppin' so hard like a German Nazi \nStartled by the bases hittin' ground \nThere's no trippin' on mine, I'm just gettin' down \nSparkamatic, I'm hangin' tight like a fanatic \nYou trapped me once and I thought that \nYou might have it \nSo step down and lend me your ear \n'89 in my time! You, '90 is my year. \n\nYou're weakenin' fast, YO! and I can tell it \nYour body's gettin' hot, so, so I can smell it \nSo don't be mad and don't be sad \n'Cause the lyrics belong to ICE, You can call me Dad \nYou're pitchin' a fit, so step back and endure \nLet the witch doctor, Ice, do the dance to cure \nSo come up close and don't be square \nYou wanna battle me -- Anytime, anywhere \n\nYou thought that I was weak, Boy, you're dead wrong \nSo come on, everybody and sing this song \n\nSay -- Play that funky music Say, go white boy, go white boy go \nplay that funky music Go white boy, go white boy, go \nLay down and boogie and play that funky music till you die. \n\nPlay that funky music Come on, Come on, let me hear \nPlay that funky music white boy you say it, say it \nPlay that funky music A little louder now \nPlay that funky music, white boy Come on, Come on, Come on \nPlay that funky music \n"
+        );
     }
 
     #[test]
@@ -200,6 +192,18 @@ mod tests {
                 vec![2, 7, 12, 17, 0],
                 vec![3, 8, 13, 18, 0],
                 vec![4, 9, 14, 19, 0]
+            ]
+        );
+        let transposed_again = transpose(&transposed);
+        // transpose() is reversible, but will include trailing null bytes
+        assert_eq!(
+            transposed_again,
+            vec![
+                vec![0, 1, 2, 3, 4],
+                vec![5, 6, 7, 8, 9],
+                vec![10, 11, 12, 13, 14],
+                vec![15, 16, 17, 18, 19],
+                vec![20, 21, 0, 0, 0],
             ]
         );
     }

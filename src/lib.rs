@@ -145,15 +145,54 @@ pub fn transpose(bytes: &Vec<Vec<u8>>) -> Vec<Vec<u8>> {
     transposed
 }
 
-pub fn break_repeating_key_xor(input_bytes: &Vec<u8>, keysize: u32) {
-    let partitioned = partition(&input_bytes, &keysize);
-    let transposed = transpose(&partitioned);
-    let keys_plaintexts: Vec<Vec<(Vec<u8>, Vec<u8>)>> = transposed
+pub fn break_repeating_key_xor(
+    input_bytes: &Vec<u8>,
+    keysizes: Vec<u32>,
+) -> (Vec<u8>, Vec<u8>, i32) {
+    let mut keysize_results: Vec<Vec<(Vec<u8>, Vec<u8>, i32)>> = vec![];
+    for keysize in keysizes {
+        let partitioned = partition(&input_bytes, &keysize);
+        let transposed = transpose(&partitioned);
+        let keys_plaintexts: Vec<Vec<(Vec<u8>, Vec<u8>)>> = transposed
+            .iter()
+            .map(|v| brute_single_byte_xor_cipher(v))
+            .collect();
+        let keys_plaintexts_scores: Vec<(Vec<u8>, Vec<u8>, i32)> = keys_plaintexts
+            .iter()
+            .map(|v| highest_scoring_plaintext(&v))
+            .collect();
+        keysize_results.push(keys_plaintexts_scores);
+    }
+    // in keysize_results, each inner vector one layer deep contains the kps for each single byte xor for a given keysize
+    let repeating_keys: Vec<Vec<u8>> = keysize_results
         .iter()
-        .map(|v| brute_single_byte_xor_cipher(v))
+        .map(|v| {
+            v.iter()
+                .map(|(single_byte_key, _, _)| single_byte_key.clone())
+                .flatten()
+                .collect()
+        })
         .collect();
-    let keys_plaintexts_scores: Vec<(Vec<u8>, Vec<u8>, i32)> = keys_plaintexts
+    let plaintexts: Vec<Vec<Vec<u8>>> = keysize_results
         .iter()
-        .map(|v| highest_scoring_plaintext(&v))
+        .map(|v| {
+            v.iter()
+                .map(|(_, plaintext, _)| plaintext.clone())
+                .collect()
+        })
         .collect();
+    let avg_scores: Vec<i32> = keysize_results
+        .iter()
+        .map(|v| v.iter().map(|(_, _, score)| score).sum::<i32>() / v.len() as i32)
+        .collect();
+    let zipped: (Vec<u8>, Vec<Vec<u8>>, i32) =
+        itertools::izip!(repeating_keys, plaintexts, avg_scores)
+            .max_by(|(_, _, score_a), (_, _, score_b)| score_a.cmp(&score_b))
+            .unwrap();
+    let retransposed_flattened_plaintext: Vec<u8> = transpose(&zipped.1)
+        .into_iter()
+        .flatten()
+        .collect::<Vec<u8>>()[0..input_bytes.len()]
+        .to_vec();
+    (zipped.0, retransposed_flattened_plaintext, zipped.2)
 }
