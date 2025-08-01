@@ -1,6 +1,7 @@
 use base64::prelude::*;
 use encoding_rs::mem::convert_utf8_to_latin1_lossy;
 use hex::FromHex;
+use openssl::symm::{Cipher, decrypt};
 use std::ops::Range;
 
 pub fn hex_to_bytes(hex_str: &str) -> Vec<u8> {
@@ -179,4 +180,10 @@ pub fn break_repeating_key_xor(input_bytes: &Vec<u8>, keysizes: Vec<u32>) -> (Ve
         .unwrap()
         .0;
     (key.to_owned(), xor_bytes(&input_bytes, &key))
+}
+
+pub fn decrypt_aes_128(input_bytes: &Vec<u8>, key: &Vec<u8>) -> Vec<u8> {
+    let cipher = Cipher::aes_128_ecb();
+    let iv: Vec<u8> = vec![0; 16];
+    decrypt(cipher, key, Some(&iv), input_bytes).unwrap()
 }
