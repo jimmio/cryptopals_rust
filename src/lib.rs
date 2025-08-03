@@ -187,3 +187,18 @@ pub fn decrypt_aes_128(input_bytes: &Vec<u8>, key: &Vec<u8>) -> Vec<u8> {
     let iv: Vec<u8> = vec![0; 16];
     decrypt(cipher, key, Some(&iv), input_bytes).unwrap()
 }
+
+pub fn detect_ecb(enc_bytes: Vec<Vec<u8>>) -> Vec<Vec<u8>> {
+    let mut partitioned: Vec<Vec<Vec<u8>>> =
+        enc_bytes.iter().map(|v| partition(&v, &16u32)).collect();
+    let mut ecb_blocks: Vec<Vec<u8>> = vec![];
+    for v in partitioned.iter_mut() {
+        let initial_v = v.clone();
+        v.sort();
+        v.dedup();
+        if v.len() != initial_v.len() {
+            ecb_blocks.push(initial_v.into_iter().flatten().collect());
+        }
+    }
+    ecb_blocks
+}
