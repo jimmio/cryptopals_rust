@@ -202,3 +202,15 @@ pub fn detect_ecb(enc_bytes: Vec<Vec<u8>>) -> Vec<Vec<u8>> {
     }
     ecb_blocks
 }
+
+pub fn pkcs7_pad(input_bytes: Vec<u8>, desired_block_size: u8) -> Vec<u8> {
+    let diff: u8 = desired_block_size - input_bytes.len() as u8;
+    if diff > 0 {
+        let mut bytes_mut_a: Vec<u8> = input_bytes.clone();
+        let mut bytes_mut_b: Vec<u8> = vec![diff; diff as usize];
+        bytes_mut_a.append(&mut bytes_mut_b);
+        bytes_mut_a
+    } else {
+        input_bytes
+    }
+}

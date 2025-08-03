@@ -254,4 +254,27 @@ mod tests {
         let empty: Vec<Vec<u8>> = vec![];
         assert_eq!(result, empty);
     }
+    #[test]
+    fn t_pkcs7_padding() {
+        let input_bytes: Vec<u8> = vec![1, 2, 3, 4];
+        let block_size: u8 = 16;
+        let result = pkcs7_pad(input_bytes, block_size);
+        let expected: Vec<u8> = vec![1, 2, 3, 4, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12];
+        assert_eq!(result, expected);
+    }
+    #[test]
+    fn t_pkcs7_padding_2() {
+        let input_bytes: Vec<u8> = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+        let block_size: u8 = 16;
+        let result = pkcs7_pad(input_bytes, block_size);
+        let expected: Vec<u8> = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+        assert_eq!(result, expected);
+    }
+    #[test]
+    fn t_pkcs7_padding_3() {
+        let input_bytes: Vec<u8> = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+        let block_size: u8 = 16;
+        let result = pkcs7_pad(input_bytes, block_size);
+        let expected: Vec<u8> = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 1];
+    }
 }
