@@ -1,7 +1,7 @@
 use base64::prelude::*;
 use encoding_rs::mem::convert_utf8_to_latin1_lossy;
 use hex::FromHex;
-use openssl::symm::{Cipher, decrypt};
+use openssl::symm::{Cipher, decrypt, encrypt};
 use std::ops::Range;
 
 pub fn hex_to_bytes(hex_str: &str) -> Vec<u8> {
@@ -186,6 +186,12 @@ pub fn decrypt_aes_128(input_bytes: &Vec<u8>, key: &Vec<u8>) -> Vec<u8> {
     let cipher = Cipher::aes_128_ecb();
     let iv: Vec<u8> = vec![0; 16];
     decrypt(cipher, key, Some(&iv), input_bytes).unwrap()
+}
+
+pub fn encrypt_aes_128(input_bytes: &Vec<u8>, key: &Vec<u8>) -> Vec<u8> {
+    let cipher = Cipher::aes_128_ecb();
+    let iv: Vec<u8> = vec![0; 16];
+    encrypt(cipher, key, Some(&iv), input_bytes).unwrap()
 }
 
 pub fn detect_ecb(enc_bytes: Vec<Vec<u8>>) -> Vec<Vec<u8>> {

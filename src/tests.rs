@@ -224,6 +224,66 @@ mod tests {
     }
 
     #[test]
+    fn t_encrypt_ecb() {
+        let input: &str = "foobarbazquxfoo!";
+        let input_bytes: Vec<u8> = string_to_bytes(input);
+        let key: &str = "YELLOW SUBMARINE";
+        let key_bytes = string_to_bytes(&key);
+        let encrypted = encrypt_aes_128(&input_bytes, &key_bytes);
+        assert_eq!(
+            encrypted,
+            vec![
+                219, 162, 245, 104, 236, 140, 11, 66, 3, 164, 170, 183, 53, 103, 47, 32, 96, 250,
+                54, 112, 126, 69, 244, 153, 219, 160, 242, 91, 146, 35, 1, 165
+            ]
+        );
+    }
+
+    #[test]
+    fn t_encrypt_ecb_2() {
+        let input: &str = "foobarbazquxfoo!foobarbazquxfoo!";
+        let input_bytes: Vec<u8> = string_to_bytes(input);
+        let key: &str = "YELLOW SUBMARINE";
+        let key_bytes = string_to_bytes(&key);
+        let encrypted = encrypt_aes_128(&input_bytes, &key_bytes);
+        assert_eq!(
+            encrypted,
+            vec![
+                219, 162, 245, 104, 236, 140, 11, 66, 3, 164, 170, 183, 53, 103, 47, 32, 219, 162,
+                245, 104, 236, 140, 11, 66, 3, 164, 170, 183, 53, 103, 47, 32, 96, 250, 54, 112,
+                126, 69, 244, 153, 219, 160, 242, 91, 146, 35, 1, 165
+            ]
+        );
+    }
+
+    #[test]
+    fn t_encrypt_ecb_3() {
+        let input: &str = "f";
+        let input_bytes: Vec<u8> = string_to_bytes(input);
+        let key: &str = "YELLOW SUBMARINE";
+        let key_bytes = string_to_bytes(&key);
+        let encrypted = encrypt_aes_128(&input_bytes, &key_bytes);
+        assert_eq!(
+            encrypted,
+            vec![
+                225, 237, 20, 246, 94, 103, 57, 187, 4, 31, 211, 227, 29, 46, 65, 232
+            ]
+        );
+    }
+
+    #[test]
+    fn t_roundtrip_ecb() {
+        let input: &str = "foobarbazquxfoo!foobarbazquxfoo!";
+        let input_bytes: Vec<u8> = string_to_bytes(input);
+        let key: &str = "YELLOW SUBMARINE";
+        let key_bytes = string_to_bytes(&key);
+        let encrypted = encrypt_aes_128(&input_bytes, &key_bytes);
+        let decrypted = decrypt_aes_128(&encrypted, &key_bytes);
+        let decrypted_string = String::from_utf8(decrypted).unwrap();
+        assert_eq!(input, decrypted_string);
+    }
+
+    #[test]
     fn t_detect_ecb() {
         let file = File::open("./challenge_files/8.txt").unwrap();
         let reader = BufReader::new(file);
