@@ -1,7 +1,8 @@
+use aes::Aes128;
+use aes::cipher::{BlockCipher, BlockDecrypt, BlockEncrypt, KeyInit, generic_array::GenericArray};
 use base64::prelude::*;
 use encoding_rs::mem::convert_utf8_to_latin1_lossy;
 use hex::FromHex;
-use openssl::symm::{Cipher, decrypt, encrypt};
 use std::ops::Range;
 
 pub fn hex_to_bytes(hex_str: &str) -> Vec<u8> {
@@ -182,16 +183,38 @@ pub fn break_repeating_key_xor(input_bytes: &Vec<u8>, keysizes: Vec<u32>) -> (Ve
     (key.to_owned(), xor_bytes(&input_bytes, &key))
 }
 
-pub fn decrypt_aes_128(input_bytes: &Vec<u8>, key: &Vec<u8>) -> Vec<u8> {
-    let cipher = Cipher::aes_128_ecb();
-    let iv: Vec<u8> = vec![0; 16];
-    decrypt(cipher, key, Some(&iv), input_bytes).unwrap()
+pub fn decrypt_aes_128_block(input_bytes: &Vec<u8>, key: &Vec<u8>) -> Vec<u8> {
+    let mut input_bytes_mut = *GenericArray::from_slice(&input_bytes);
+    let key_arr = GenericArray::from_slice(&key);
+    let cipher = Aes128::new(&key_arr);
+    cipher.decrypt_block(&mut input_bytes_mut);
+    input_bytes_mut.to_vec()
 }
 
-pub fn encrypt_aes_128(input_bytes: &Vec<u8>, key: &Vec<u8>) -> Vec<u8> {
-    let cipher = Cipher::aes_128_ecb();
-    let iv: Vec<u8> = vec![0; 16];
-    encrypt(cipher, key, Some(&iv), input_bytes).unwrap()
+pub fn encrypt_aes_128_block(input_bytes: &Vec<u8>, key: &Vec<u8>) -> Vec<u8> {
+    let mut input_bytes_mut = *GenericArray::from_slice(&input_bytes);
+    let key_arr = GenericArray::from_slice(&key);
+    let cipher = Aes128::new(&key_arr);
+    cipher.encrypt_block(&mut input_bytes_mut);
+    input_bytes_mut.to_vec()
+}
+
+pub fn decrypt_aes_128_ecb(input_bytes: &Vec<u8>, key: &Vec<u8>) -> Vec<u8> {
+    let partitioned: Vec<Vec<u8>> = partition(input_bytes, &16u32);
+    partitioned
+        .iter()
+        .map(|v| decrypt_aes_128_block(v, key))
+        .flatten()
+        .collect()
+}
+
+pub fn encrypt_aes_128_ecb(input_bytes: &Vec<u8>, key: &Vec<u8>) -> Vec<u8> {
+    let partitioned: Vec<Vec<u8>> = partition(input_bytes, &16u32);
+    partitioned
+        .iter()
+        .map(|v| encrypt_aes_128_block(v, key))
+        .flatten()
+        .collect()
 }
 
 pub fn detect_ecb(enc_bytes: Vec<Vec<u8>>) -> Vec<Vec<u8>> {
@@ -219,4 +242,17 @@ pub fn pkcs7_pad(input_bytes: Vec<u8>, desired_block_size: u8) -> Vec<u8> {
     } else {
         input_bytes
     }
+}
+
+pub fn decrypt_aes_128_cbc(input_bytes: &Vec<u8>, key: &Vec<u8>, iv: &Vec<u8>) -> Vec<u8> {
+    // for each block, decrypt then xor that plaintext against the previous ciphertext block
+    let mut iv_mut: Vec<u8> = iv.clone();
+    let mut input_bytes_mut: Vec<u8> = input_bytes.clone();
+    iv_mut.append(&mut input_bytes_mut);
+    let partitioned = partition(&iv_mut, &16u32);
+    for i in 0..partitioned.len() {
+        // let decrypted)
+        // let xord = xor_bytes(partitioned.get(i),)
+    }
+    vec![]
 }
