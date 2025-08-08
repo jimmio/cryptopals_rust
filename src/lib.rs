@@ -262,9 +262,11 @@ pub fn decrypt_aes_128_cbc(input_bytes: &Vec<u8>, key: &Vec<u8>, iv: &Vec<u8>) -
     let mut input_bytes_mut: Vec<u8> = input_bytes.clone();
     iv_mut.append(&mut input_bytes_mut);
     let partitioned = partition(&iv_mut, &16u32);
-    for i in 0..partitioned.len() {
-        // let decrypted)
-        // let xord = xor_bytes(partitioned.get(i),)
+    let mut cbc_decrypted: Vec<Vec<u8>> = vec![];
+    for i in 1..partitioned.len() {
+        let aes_decrypted = decrypt_aes_128_block(&partitioned[i], &key);
+        let xord = xor_bytes(&aes_decrypted, partitioned.get(i - 1).unwrap());
+        cbc_decrypted.push(xord);
     }
-    vec![]
+    cbc_decrypted.into_iter().flatten().collect()
 }
