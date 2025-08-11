@@ -3,7 +3,23 @@ use aes::cipher::{BlockDecrypt, BlockEncrypt, KeyInit, generic_array::GenericArr
 use base64::prelude::*;
 use encoding_rs::mem::convert_utf8_to_latin1_lossy;
 use hex::FromHex;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 use std::ops::Range;
+
+pub fn hex_file_to_bytes(filepath: &str) -> Vec<Vec<u8>> {
+    let file = File::open(filepath).expect("Unable to open file.");
+    let reader = BufReader::new(file);
+    let lines: Vec<String> = reader.lines().map(|l| l.unwrap()).collect();
+    lines.iter().map(|l| hex_to_bytes(l)).collect()
+}
+
+pub fn b64_file_to_bytes(filepath: &str) -> Vec<u8> {
+    let file = File::open(filepath).expect("Unable to open file.");
+    let reader = BufReader::new(file);
+    let b64: String = reader.lines().map(|l| l.unwrap()).collect();
+    b64_to_bytes(&b64)
+}
 
 pub fn hex_to_bytes(hex_str: &str) -> Vec<u8> {
     Vec::<u8>::from_hex(hex_str).expect("Unable to convert hex string to Vec<u8>.")

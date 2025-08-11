@@ -1,6 +1,4 @@
 use cryptopals::*;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
 
 #[cfg(test)]
 mod tests {
@@ -104,10 +102,7 @@ mod tests {
     // Challenge 4
     #[test]
     fn t_detect_single_character_xor() {
-        let file = File::open("./challenge_files/4.txt").unwrap();
-        let reader = BufReader::new(file);
-        let lines: Vec<String> = reader.lines().map(|l| l.unwrap()).collect();
-        let lines_as_bytes: Vec<Vec<u8>> = lines.iter().map(|l| hex_to_bytes(l)).collect();
+        let lines_as_bytes = hex_file_to_bytes("./challenge_files/4.txt");
         let highest_scoring = break_single_character_xor(lines_as_bytes);
         assert_eq!(
             String::from_utf8(highest_scoring.1).unwrap(),
@@ -140,10 +135,7 @@ mod tests {
 
     #[test]
     fn t_break_repeating_key_xor() {
-        let file = File::open("./challenge_files/6.txt").unwrap();
-        let reader = BufReader::new(file);
-        let b64: String = reader.lines().map(|l| l.unwrap()).collect();
-        let input_bytes: Vec<u8> = b64_to_bytes(&b64);
+        let input_bytes: Vec<u8> = b64_file_to_bytes("./challenge_files/6.txt");
         let keysizes = guess_xor_keysize(&input_bytes);
         assert_eq!(keysizes, vec![2, 3, 5, 13, 18, 29, 58, 4, 6, 7]);
         let key_plaintext_score = break_repeating_key_xor(&input_bytes, keysizes);
@@ -209,10 +201,7 @@ mod tests {
 
     #[test]
     fn t_decrypt_ecb() {
-        let file = File::open("./challenge_files/7.txt").unwrap();
-        let reader = BufReader::new(file);
-        let b64: String = reader.lines().map(|l| l.unwrap()).collect();
-        let input_bytes: Vec<u8> = b64_to_bytes(&b64);
+        let input_bytes: Vec<u8> = b64_file_to_bytes("./challenge_files/7.txt");
         let key: &str = "YELLOW SUBMARINE";
         let key_bytes = string_to_bytes(&key);
         let decrypted = decrypt_aes_128_ecb(&input_bytes, &key_bytes);
@@ -268,10 +257,7 @@ mod tests {
 
     #[test]
     fn t_detect_ecb() {
-        let file = File::open("./challenge_files/8.txt").unwrap();
-        let reader = BufReader::new(file);
-        let hex_strs: Vec<String> = reader.lines().map(|l| l.unwrap()).collect();
-        let enc_bytes: Vec<Vec<u8>> = hex_strs.iter().map(|v| hex_to_bytes(&v)).collect();
+        let enc_bytes = hex_file_to_bytes("./challenge_files/8.txt");
         let result = detect_ecb(enc_bytes);
         assert_eq!(
             result,
@@ -339,10 +325,7 @@ mod tests {
 
     #[test]
     fn t_decrypt_aes_128_cbc() {
-        let file = File::open("./challenge_files/10.txt").unwrap();
-        let reader = BufReader::new(file);
-        let b64: String = reader.lines().map(|l| l.unwrap()).collect();
-        let input_bytes: Vec<u8> = b64_to_bytes(&b64);
+        let input_bytes = b64_file_to_bytes("./challenge_files/10.txt");
         let key: &str = "YELLOW SUBMARINE";
         let key_bytes = string_to_bytes(&key);
         let iv_bytes = vec![0; 16];
