@@ -286,3 +286,9 @@ pub fn decrypt_aes_128_cbc(input_bytes: &Vec<u8>, key: &Vec<u8>, iv: &Vec<u8>) -
     }
     cbc_decrypted.into_iter().flatten().collect()
 }
+
+pub fn rand_bytes() -> Vec<u8> {
+    let mut buf = [0u8; 16];
+    getrandom::fill(&mut buf).expect("Unable to obtain bytes.");
+    buf.to_vec()
+}
