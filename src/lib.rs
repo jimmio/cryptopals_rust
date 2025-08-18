@@ -3,6 +3,7 @@ use aes::cipher::{BlockDecrypt, BlockEncrypt, KeyInit, generic_array::GenericArr
 use base64::prelude::*;
 use encoding_rs::mem::convert_utf8_to_latin1_lossy;
 use hex::FromHex;
+use rand::Rng;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::ops::Range;
@@ -291,4 +292,20 @@ pub fn rand_bytes() -> Vec<u8> {
     let mut buf = [0u8; 16];
     getrandom::fill(&mut buf).expect("Unable to obtain bytes.");
     buf.to_vec()
+}
+
+pub fn ecb_cbc_oracle(input_bytes: Vec<u8>) -> Vec<u8> {
+    let mut rng = rand::rng();
+    let rand_1: usize = rng.random_range(5..=10);
+    let rand_2: usize = rng.random_range(5..=10);
+    let ecb_or_cbc: u8 = rng.random_range(0..=1);
+    let input_expanded: Vec<u8> = [vec![0; rand_1], input_bytes, vec![0; rand_2]].concat();
+    let padded = pkcs7_pad(input_expanded, 16);
+    let key = rand_bytes();
+    if ecb_or_cbc == 0 {
+        encrypt_aes_128_ecb(&padded, &key)
+    } else {
+        // TODO - CBC
+        padded
+    }
 }

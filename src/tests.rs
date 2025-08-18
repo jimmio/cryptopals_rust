@@ -343,4 +343,13 @@ mod tests {
         assert_ne!(result, vec![0; 16]);
         assert_eq!(result.len(), 16);
     }
+
+    #[test]
+    fn t_ecb_cbc_oracle() {
+        let input_bytes = vec![1, 2, 3, 4, 5];
+        let result = ecb_cbc_oracle(input_bytes);
+        // check padding
+        assert_eq!(result.len() % 16, 0);
+        assert_eq!(result, vec![]);
+    }
 }
