@@ -273,6 +273,28 @@ pub fn pkcs7_pad(input_bytes: Vec<u8>, desired_block_size: u8) -> Vec<u8> {
     }
 }
 
+pub fn encrypt_aes_128_cbc(input_bytes: &Vec<u8>, key: &Vec<u8>, iv: &Vec<u8>) -> Vec<u8> {
+    // for each block, xor the plaintext against the previous ciphertext (or IV) block, then encrypt
+    let mut iv_mut: Vec<u8> = iv.clone();
+    let mut input_bytes_mut: Vec<u8> = input_bytes.clone();
+    iv_mut.append(&mut input_bytes_mut);
+    let partitioned = partition(&iv_mut, &16u32);
+    let mut cbc_encrypted: Vec<Vec<u8>> = vec![];
+    for i in 1..partitioned.len() {
+        let prior_ciphertext_block = {
+            if i == 1 {
+                partitioned.get(i - 1).unwrap()
+            } else {
+                cbc_encrypted.get(i - 2).unwrap()
+            }
+        };
+        let xord = xor_bytes(&prior_ciphertext_block, partitioned.get(i).unwrap());
+        let aes_encrypted = encrypt_aes_128_block(&xord, &key);
+        cbc_encrypted.push(aes_encrypted);
+    }
+    cbc_encrypted.into_iter().flatten().collect()
+}
+
 pub fn decrypt_aes_128_cbc(input_bytes: &Vec<u8>, key: &Vec<u8>, iv: &Vec<u8>) -> Vec<u8> {
     // for each block, decrypt then xor that plaintext against the previous ciphertext block
     let mut iv_mut: Vec<u8> = iv.clone();
