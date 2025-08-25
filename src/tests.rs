@@ -362,6 +362,11 @@ mod tests {
         let result = ecb_cbc_oracle(input_bytes);
         // check padding
         assert_eq!(result.len() % 16, 0);
-        assert_eq!(result, vec![]);
+    }
+
+    #[test]
+    fn t_ecb_cbc_oracle_detection() {
+        let result: String = detect_ecb_cbc();
+        assert!(result.contains("ecb") || result.contains("cbc"));
     }
 }

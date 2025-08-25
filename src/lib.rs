@@ -327,7 +327,20 @@ pub fn ecb_cbc_oracle(input_bytes: Vec<u8>) -> Vec<u8> {
     if ecb_or_cbc == 0 {
         encrypt_aes_128_ecb(&padded, &key)
     } else {
-        // TODO - CBC
-        padded
+        let iv = &rand_bytes();
+        encrypt_aes_128_cbc(&padded, &key, iv)
+    }
+}
+
+pub fn detect_ecb_cbc() -> String {
+    let input_bytes: Vec<u8> = vec![0; 32];
+    let encrypted = ecb_cbc_oracle(input_bytes);
+    let partitioned = partition(&encrypted, &16);
+    let result: Vec<Vec<u8>> = detect_ecb(partitioned);
+    let empty: Vec<Vec<u8>> = vec![];
+    if result == empty {
+        "ecb".to_string()
+    } else {
+        "cbc".to_string()
     }
 }
